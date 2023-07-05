@@ -3,12 +3,13 @@
 
 using namespace std;
 
-void lerArquivo()
+vector<char> lerArquivo()
 {
     FILE *f;
     int tamanho;
     char * buffer;
     size_t arquivo;
+    vector<char> listaRetorno;
 
     f = fopen("in.txt", "r");
 
@@ -41,12 +42,19 @@ void lerArquivo()
         int count=0;
         while(count<tamanho)
         {
-            cout << buffer[count] << " ";
+            listaRetorno.push_back(buffer[count]);
+            //cout << buffer[count] << " ";
             count++;
         }
     }
 
-
     fclose(f);
     free(buffer);
+
+    for(int i=0; i<listaRetorno.size(); i++)
+    {
+        
+    }
+
+    return listaRetorno;
 }
