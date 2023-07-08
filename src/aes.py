@@ -1,165 +1,128 @@
-sbox = [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
-        0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
-        0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15, 
-        0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75, 
-        0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84, 
-        0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf, 
-        0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8, 
-        0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2, 
-        0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73, 
-        0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb, 
-        0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79, 
-        0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08, 
-        0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a, 
-        0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e, 
-        0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf, 
-        0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16]
+# tabela referencia para substituicao de valores na hora de mascarar a mensagem ao longo das 'rodadas'
 
-rsbox = [0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb
-        , 0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb
-        , 0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e
-        , 0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25
-        , 0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92
-        , 0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84
-        , 0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06
-        , 0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b
-        , 0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73
-        , 0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e
-        , 0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b
-        , 0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4
-        , 0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f
-        , 0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef
-        , 0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61
-        , 0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d]
+SUBSTITUTION_BOX = (
+    0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
+    0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
+    0xB7, 0xFD, 0x93, 0x26, 0x36, 0x3F, 0xF7, 0xCC, 0x34, 0xA5, 0xE5, 0xF1, 0x71, 0xD8, 0x31, 0x15,
+    0x04, 0xC7, 0x23, 0xC3, 0x18, 0x96, 0x05, 0x9A, 0x07, 0x12, 0x80, 0xE2, 0xEB, 0x27, 0xB2, 0x75,
+    0x09, 0x83, 0x2C, 0x1A, 0x1B, 0x6E, 0x5A, 0xA0, 0x52, 0x3B, 0xD6, 0xB3, 0x29, 0xE3, 0x2F, 0x84,
+    0x53, 0xD1, 0x00, 0xED, 0x20, 0xFC, 0xB1, 0x5B, 0x6A, 0xCB, 0xBE, 0x39, 0x4A, 0x4C, 0x58, 0xCF,
+    0xD0, 0xEF, 0xAA, 0xFB, 0x43, 0x4D, 0x33, 0x85, 0x45, 0xF9, 0x02, 0x7F, 0x50, 0x3C, 0x9F, 0xA8,
+    0x51, 0xA3, 0x40, 0x8F, 0x92, 0x9D, 0x38, 0xF5, 0xBC, 0xB6, 0xDA, 0x21, 0x10, 0xFF, 0xF3, 0xD2,
+    0xCD, 0x0C, 0x13, 0xEC, 0x5F, 0x97, 0x44, 0x17, 0xC4, 0xA7, 0x7E, 0x3D, 0x64, 0x5D, 0x19, 0x73,
+    0x60, 0x81, 0x4F, 0xDC, 0x22, 0x2A, 0x90, 0x88, 0x46, 0xEE, 0xB8, 0x14, 0xDE, 0x5E, 0x0B, 0xDB,
+    0xE0, 0x32, 0x3A, 0x0A, 0x49, 0x06, 0x24, 0x5C, 0xC2, 0xD3, 0xAC, 0x62, 0x91, 0x95, 0xE4, 0x79,
+    0xE7, 0xC8, 0x37, 0x6D, 0x8D, 0xD5, 0x4E, 0xA9, 0x6C, 0x56, 0xF4, 0xEA, 0x65, 0x7A, 0xAE, 0x08,
+    0xBA, 0x78, 0x25, 0x2E, 0x1C, 0xA6, 0xB4, 0xC6, 0xE8, 0xDD, 0x74, 0x1F, 0x4B, 0xBD, 0x8B, 0x8A,
+    0x70, 0x3E, 0xB5, 0x66, 0x48, 0x03, 0xF6, 0x0E, 0x61, 0x35, 0x57, 0xB9, 0x86, 0xC1, 0x1D, 0x9E,
+    0xE1, 0xF8, 0x98, 0x11, 0x69, 0xD9, 0x8E, 0x94, 0x9B, 0x1E, 0x87, 0xE9, 0xCE, 0x55, 0x28, 0xDF,
+    0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16,
+)
 
-rcon = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36]
+# tabela de referencia para fazer a operacao que cifra a primeira coluna de cada 'block cipher' de chaves pra deixar o negocio mais legal e mais dificil de programar
 
-class AES():
-    def __init__(self) -> None:
-        self.value = 0
+R_TABLE = (
+    0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40,
+    0x80, 0x1B, 0x36, 0x6C, 0xD8, 0xAB, 0x4D, 0x9A,
+    0x2F, 0x5E, 0xBC, 0x63, 0xC6, 0x97, 0x35, 0x6A,
+    0xD4, 0xB3, 0x7D, 0xFA, 0xEF, 0xC5, 0x91, 0x39,
+)
 
-    def mul2_galois(self, valor):                                               # metodo implementado para fazer a multiplicacao de Galois
-        temp = valor
-        temp = temp>>7
-        temp = temp and 0x1b
+# funcao para converter texto em blocos de 16 elementos para se aplicar o metodo AES
+def text_to_matrix(text):
+    matrix = []
+    for i in range(16):
+        byte = (text >> (8 * (15 - i))) & 0xFF                      # pegando 1 byte do texto 
+        if i % 4 == 0:
+            matrix.append([byte])                                   # criando uma linha nova no 'block cipher' pros bytes de texto que foram claculados
+        else:
+            matrix[i // 4].append(byte)                             # adicionando o 'block cipher' de bytes na matriz de 16 elementos que eh usada no metodo AES
+    return matrix                                                   # texto em matriz para ser usado na cifra AES
 
-        return ((valor<<1)^temp)
+# funcao para converter blocos de 16 elementos em texto para descifrar uma mensagem criptografada com AES
 
+def matrix_to_text(matrix):
+    text = 0
+    for i in range(4):
+        for j in range(4):
+            text |= (matrix[i][j] << (120 - 8 * (4 * i + j)))       # calculando a posicao original do bloco de bytes no texto original
+    return text                                                     # o texto que antes era um 'block cipher' dado por uma matriz de 16 elementos agora eh um texto completo de 64 bits
 
-    def CifraDecifra(self, estado, chave, encordec):                            # decifrando - encordec=1; cifrando - encordec=0
-        if(encordec):                                                           # se estiver decifrando uma mensagem,
-            for rodada in range(0,10,1):                                        # computando a ultima chave usada na cifracao antes de comecar a decifrar
-                chave[0] = sbox[chave[13]]^chave[0]^rcon[rodada]
-                chave[1] = sbox[chave[14]]^chave[1]
-                chave[2] = sbox[chave[15]]^chave[2]
-                chave[3] = sbox[chave[12]]^chave[3]
+class AES:
+    # calculando as chaves a serem utilizadas no processo de cifracao de cada rodada do processo de cifra da AES
+    def __init__(self, key):
+        self.round_keys = text_to_matrix(key)                       # transformando a chave em uma 'block cipher'
 
-                for i in range(4,16,1):
-                    chave[i] = chave[i]^chave[i-4]
+        for i in range(4, 4 * 11):
+            self.round_keys.append([])
+            if i % 4 == 0:
+                byte = self.round_keys[i - 4][0] ^ SUBSTITUTION_BOX[self.round_keys[i - 1][1]] ^ R_TABLE[i // 4]        # fazendo a operacao maluca de 3 XORs pras primeiras colunas das chaves
+                self.round_keys[i].append(byte)                                                                         # adiciona a chave calulada na matriz de chaves das rodadas
 
-            # aqui, a chave computada acima sera a primeira chave utilizada no processo de cifracao
-
-            for i in range(0,16,1):                                             # primeiro 'AddRoundKey' da decifracao 
-                estado[i] = estado[i]^chave[i]
-
-        for rodada in range(0,10,1):                                            # 9 rodadas de cifracao, ja que uma chave de 128 bits exige 10 loops - o primeiro foi feito acima
-            if(encordec):
-                for i in range(15,3,-1):                                        # calculando as chaves de tras pra frente pra decifrar cada etapa da mensagem
-                    chave[i] = chave[i]^chave[i-4]
-
-                chave[0] = sbox[chave[13]]^chave[0]^rcon[9-rodada]
-                chave[1] = sbox[chave[14]]^chave[1]
-                chave[2] = sbox[chave[15]]^chave[2]
-                chave[3] = sbox[chave[12]]^chave[3]
+                for j in range(1, 4):
+                    byte = self.round_keys[i - 4][j] ^ SUBSTITUTION_BOX[self.round_keys[i - 1][(j + 1) % 4]]            # terminando de criptografar a palavra do texto original e colocando ela na tabela de chaves das rodadas de criptografia
+                    self.round_keys[i].append(byte)
             else:
-                for i in range(0,16,1):                                         # cifrando a mensagem original de acordo com a tabela de referencia - a sbox
-                    estado[i] = sbox[estado[i]^chave[i]]
-                
-                aux = estado[1]                                                 # dando o tal 'shift' da primeira linha a partir do texto cifrado pela tabela sbox - se voce estiver decifrando, esse aqui eh o momento em que damos shift nas colunas
-                estado[1] = estado[5]
-                estado[5] = estado[9]
-                estado[9] = estado[13]
-                estado[13] = aux
-
-                aux1 = estado[2]                                                # dando o tal 'shift' da segunda linha a partir do texto cifrado pela tabela sbox - se voce estiver decifrando, esse aqui eh o momento em que damos shift nas colunas
-                aux2 = estado[6]
-                estado[2] = estado[10]
-                estado[6] = estado[14]
-                estado[10] = aux1
-                estado[14] = aux2
-
-                aux = estado[15]                                                # dando o tal 'shift' da terceira linha a partir do texto cifrado pela tabela sbox - se voce estiver decifrando, esse aqui eh o momento em que damos shift nas colunas
-                estado[15] = estado[11]
-                estado[11] = estado[7]
-                estado[7] = estado[3]
-                estado[3] = aux
+                for j in range(4):
+                    byte = self.round_keys[i - 4][j] ^ self.round_keys[i - 1][j]                                        # calculando as outras colunas da 'block cipher' de cada rodada do metodo AES
+                    self.round_keys[i].append(byte)
             
-            if (rodada>0 and encordec) or (rodada<9 and not encordec):                              # esse trambique aqui eh pra cifrar o texto fazendo multiplicacao de Galois com o tal do metodo GCM
-                for i in range(0,4,1):
-                    aux = i<<2 # isso aqui ta com uma cara de que ta errado
+            # ao final, a gente vai ter uma lista matrizes que representam as chaves de cada rodada do metodo AES
 
-                    if(encordec):                                                                   # fazendo a multiplicacao twist carpado de Galois pra voltar pro 'block cipher' depois que
-                        aux1 = self.mul2_galois(self.mul2_galois(estado[aux]^estado[aux+2]))        # as colunas do 'block cipher' foram rodadas
-                        aux2 = self.mul2_galois(self.mul2_galois(estado[aux+1]^estado[aux+3]))
+    def encrypt(self, plaintext):
+        plaintext = text_to_matrix(plaintext)                                       # convertendo o texto em 'block cipher'
 
-                        estado[aux] = estado[aux]^aux1
-                        estado[aux+1] = estado[aux+1]^aux2
-                        estado[aux+2] = estado[aux+2]^aux1
-                        estado[aux+3] = estado[aux+3]^aux2
+        self.add_round_key(plaintext, self.round_keys[:4])                          # cifra a mensagem com a chave da rodada
 
-                    aux1 = estado[aux]^estado[aux+1]^estado[aux+2]^estado[aux+3]                    # daqui pra frente eh cifrando pelo algoritmo as colunas restantes do bloco de 16 elementos do 'block cipher'
-                    aux2 = estado[aux]                                                              # essa cifracao - referente ao passo MixColumns do processo - faz a multiplicacao de Galois pra gerar um novo 'block cipher'
+        for i in range(1, 10):
+            self.round_encrypt(plaintext, self.round_keys[4 * i : 4 * (i + 1)])     # cifrando a mensagem passada como paramento por 9 rodadas, ja que a chave utilizada eh de 128 bits
 
-                    aux3 = estado[aux]^estado[aux+1]
-                    aux3 = self.mul2_galois(aux3)
-                    estado[aux] = estado[aux]^aux3^aux1
+        # fazendo a ultima rodada do processo sem multiplicar as colunas no grupo de galois
+        self.sub_bytes(plaintext)                                                   
+        self.shift_rows(plaintext)
+        self.add_round_key(plaintext, self.round_keys[40:])
 
-                    aux3 = estado[aux+1]^estado[aux+2]
-                    aux3 = self.mul2_galois(aux3)
-                    estado[aux+1] = estado[aux+1]^aux3^aux1
+        return matrix_to_text(plaintext)                                            # aqui tem o texto completamente cifrado pelo metodo AES
 
-                    aux3 = estado[aux+2]^estado[aux+3]
-                    aux3 = self.mul2_galois(aux3)
-                    estado[aux+2] = estado[aux+2]^aux3^aux1
+    def round_encrypt(self, matrix, key):
+        # aqui eh onde acontece o processo de cifracao da mensagem de acordo com o metodo AES
 
-                    aux3 = estado[aux+3]^aux2
-                    aux3 = self.mul2_galois(aux3)
-                    estado[aux+3] = estado[aux+3]^aux3^aux1
-                
-            if(encordec):                                                                           # se estiver decifrando,                                               
-                aux = estado[13]                                                                    # de o shift nas linhas pra voltar pro estado original
-                estado[13] = estado[9]
-                estado[9] = estado[5]
-                estado[5] = estado[1]
-                estado[1] = aux
-                
-                aux = estado[10]                                                                    
-                aux1 = estado[14]
-                estado[10] = estado[2]
-                estado[14] = estado[6]
-                estado[2] = aux
-                estado[6] = aux1
-                
-                aux = estado[3]                                                                     
-                estado[3] = estado[7]
-                estado[7] = estado[11]
-                estado[11] = estado[15]
-                estado[15] = aux
+        self.sub_bytes(matrix)                                                      # substitui a block cipher da rodada pelo seu equivalente da tabela de substituicao
+        self.shift_rows(matrix)                                                     # da sihft nas linhas
+        self.mix_columns(matrix)                                                    # multiplica as colunas no grupo de galois
+        self.add_round_key(matrix, key)                                             # faz XOR da block cipher de texto com a block cipher de chave da rodada pra cifrar a mensagem 
 
-                for i in range(0,16,1):                                                             # pela sbox reversa - rsbox, consegue-se voltar ao texto original a cada rodada
-                    estado[i] = rsbox[estado[i]]^chave[i]
-            else:
-                chave[0] = sbox[chave[13]]^chave[0]^rcon[rodada]                # calculando a chave a ser usada para cifrar o 'block cipher' da rodada
-                chave[1] = sbox[chave[14]]^chave[1]
-                chave[2] = sbox[chave[15]]^chave[2]
-                chave[3] = sbox[chave[12]]^chave[3]
+    def add_round_key(self, matrix, key):
+        for i in range(4):
+            for j in range(4):
+                matrix[i][j] ^= key[i][j]                                           # pega a chave passada como paramentro - correspondente da rodada - e faz a operacao XOR com o texto para cifrar a mensagem
 
-                for i in range(4,16,1):
-                    chave[i] = chave[i]^chave[i-4]
-                
-        if(not encordec):                                                      # calculando o novo 'block cipher' com a chave calculada anteriormente
-            for i in range(0,16,1):
-                estado[i] = estado[i]^chave[i]
+    def sub_bytes(self, matrix):
+        for i in range(4):
+            for j in range(4):
+                matrix[i][j] = SUBSTITUTION_BOX[matrix[i][j]]                       # pega a 'block cipher' da rodada e substitui pela tabela de referencia de substituicao pra cifrar a mensagem de novo
 
-        return estado
-    
+    def shift_rows(self, matrix):
+        # esse metodo aqui eh pra dar aqueles shifts nas linhas da 'block cipher'
+        matrix[0][1], matrix[1][1], matrix[2][1], matrix[3][1] = matrix[1][1], matrix[2][1], matrix[3][1], matrix[0][1]
+        matrix[0][2], matrix[1][2], matrix[2][2], matrix[3][2] = matrix[2][2], matrix[3][2], matrix[0][2], matrix[1][2]
+        matrix[0][3], matrix[1][3], matrix[2][3], matrix[3][3] = matrix[3][3], matrix[0][3], matrix[1][3], matrix[2][3]
+
+    def multiplyGalois(self, a):
+        return (((a << 1) ^ 0x1B) & 0xFF) if (a & 0x80) else (a << 1)       # faz a multiplicacao no grupo de galois
+
+    def mix_columns(self, s):
+        # aqui eh onde acontece aquela multiplicacao doida das colunas no grupo de galois
+
+        for i in range(4):
+            t = s[i][0] ^ s[i][1] ^ s[i][2] ^ s[i][3]           # XOR das colunas
+            u = s[i][0]
+            
+            # XOR das colunas com a multiplicacao no grupo de galois de dois elementos adjacentes
+
+            s[i][0] ^= t ^ self.multiplyGalois(s[i][0] ^ s[i][1])     
+            s[i][1] ^= t ^ self.multiplyGalois(s[i][1] ^ s[i][2])
+            s[i][2] ^= t ^ self.multiplyGalois(s[i][2] ^ s[i][3])
+            s[i][3] ^= t ^ self.multiplyGalois(s[i][3] ^ u)
+
+        # no final, a gente tem a block cipher inteira cifrada com a multiplicacao no grupo de galois
