@@ -1,4 +1,4 @@
-from .generate_prime import GeneratePrime
+from src.miller_rabin import MillerRabin
 from .utils import Utils
 import math
 import struct
@@ -6,218 +6,146 @@ import hashlib
 import os
 
 class RSA():
-    """
-    Class for implementing RSA encryption and decryption.
-    """
     def __init__(self) -> None:
-        """
-        Initialize the GeneratePrime and Utils objects.
-        """
-        self.gen_prime = GeneratePrime()
         self.utils = Utils()
-        self.hash_func = hashlib.sha256
+        self.func_hash = hashlib.sha256
         self.k = int(1024/8)
-        self.h_len = self.hash_func().digest_size
+        self.h_len = self.func_hash().digest_size
 
-    def generate_keys(self):
-        """
-        Generates the public and private keys for RSA encryption.
+    # Essa função gera os expoentes de encriptação, decriptação
+    # e o módulo.
+    def gerar_chaves(self):      
+        miller_rabin = MillerRabin()
 
-        Returns:
-            List[Tuple[int]]: A list containing two tuples, each representing a pair of public or private keys.
-        """
+        # Gera os 2 primos necessários testando a primalidade com Miller-Rabin  
+        primo_p = miller_rabin.gera_primo()
+        primo_q = miller_rabin.gera_primo()
+
+        # O módulo que eventualmente vai ser utilizado no processo de cifração/decifração
+        modulo = primo_p * primo_q
         
-        prime_p = self.gen_prime.gen_prime()  
-        prime_q = self.gen_prime.gen_prime()  
-
-        modulus = prime_p * prime_q
+        # Resultado da função totiente; quantidade de coprimos do módulo
+        phi = (primo_p - 1) * (primo_q - 1)
         
-        totient = (prime_p - 1) * (prime_q - 1)
+        # TODO: achar o expoente de encriptação de maneira correta e mais detalhada
+        # Por que CARALHOS ele escolheu esse expoente específico??????
+        e = 65537
         
-        encryption_exponent = 65537
+        # Ao invés de fazermos um trabalho mais pesado de procura do expoente de decifração
+        # utilizando o Algoritmo Euclidiano normal, podemos encurtar o caminho utilizando 
+        # o Algoritmo Euclidiano Extendido.
+        d = self.utils.euclideano_extendido(e, phi)[1]
         
-        out_extended_gcd = self.utils.extended_gcd(encryption_exponent, totient)
-        decryption_exponent = out_extended_gcd[1]
+        # TODO: testar pra ver se o código funciona sem essas 2 linhas
+        if (d < 0): 
+            d += phi
 
-        if decryption_exponent < 0: 
-            decryption_exponent += totient
+        return e, d, modulo
+
+    # Essa função aplica o algoritmo RSA.
+    def aplicar_rsa(self, mensagem, chave, modulo):
+        resultado = []
+
+        for letra in mensagem:
+            resultado.append(pow(letra, chave, modulo))   # letra_cifrada = letra^chave (mod n)
         
-        public_key = [modulus, encryption_exponent]
-        private_key = [modulus, decryption_exponent]
+        return resultado
 
-        return (public_key, private_key)
+    def gerar_bloco_de_dados(self, l_hash, mensagem):
+        padding = bytearray()
 
-    def RSAEncrypt(self, encoded_message, public_key):
-        """
-        Encrypts a message using RSA encryption.
+        tamanho_completo = self.k - len(mensagem) - (2 * self.h_len) - 2 
 
-        Args:
-            encoded_message (list): The message to be encrypted, represented as a list of ints.
-            public_key (tuple): The RSA public key, represented as a tuple of two ints (n, e).
-
-        Returns:
-            list: The encrypted message, represented as a list of ints.
-        """
-        cryptogram = []
-        for i in encoded_message:
-            # c = m^e \mod n
-            cryptogram.append(pow(i, public_key[1], public_key[0]))
-        return cryptogram
-
-    def RSADecrypt(self, encoded_message, private_key):
-        """
-        Decrypts an RSA-encrypted message.
-
-        Args:
-        encoded_message (list): The encrypted message, represented as a list of ints.
-            private_key (tuple): The RSA private key, represented as a tuple of two ints (n, d).
-
-        Returns:
-            list: The decrypted message, represented as a list of ints.
-        """
-        message = []
-        for i in encoded_message:
-            # m = c^d \mod n
-            message.append(pow(i, private_key[1], private_key[0]))
-        return message
-
-    def form_data_block(self, l_hash, message):
-        """
-        Forms a data block for a message.
-
-        Args:
-            l_hash (bytes): The hash of the message, represented as bytes.
-            message (bytes): The message to be sent, represented as bytes.
-
-        Returns:
-            bytes: The formed data block, ready to be encrypted.
-        """
-        ps = bytearray()
-        for _ in range(self.k - len(message) - ( 2 * self.h_len ) - 2):
-            ps.append(0) 
-        return l_hash + ps + b'\x01' + message
-
-    def OAEPencrypt(self, message, public_key, label=""):
-        """
-        Encrypt a message using the OAEP method.
-
-        Args:
-            message (bytes): The message to be encrypted.
-            public_key (int): The public key to encrypt the message with.
-            label (str, optional): A label to be associated with the message. Defaults to "".
-
-        Returns:
-            bytes: The encrypted message.
-
-        Raises:
-            ValueError: If the message is too long to be encoded using OAEP.
-        """
-
-        label = label.encode()
-
-        if len(message) > self.k - 2 * self.h_len - 2:
-            raise ValueError("Message is too long to be encoded using OAEP.")
-
-        # 1) hash the label using sha256
-        l_hash = self.hash_func(label).digest()
-
-        # 2) generate a padding string PS
-        # 3) concatenate l_hash, ps, the single byte 0x01, and the message M
-        db = self.form_data_block(l_hash, message)
-
-        # 4) generate a random seed of length h_len
-        seed = os.urandom(self.h_len)
-
-        # 5) generate a mask of the appropriate length for the data block
-        db_mask = self.mgf1(seed, self.k - self.h_len - 1, self.hash_func)
-
-        # 6) mask the data block with the generated mask
-        masked_db = bytes(self.utils.xor(db, db_mask))
-
-        # 7) generate a mask of length hLen for the seed
-        seed_mask = self.mgf1(masked_db, self.h_len, self.hash_func)
+        for i in range(tamanho_completo):
+            padding.append(0) 
         
-        # 8) mask the seed with the generated mask
-        masked_seed = bytes(self.utils.xor(seed, seed_mask))
+        return l_hash + padding + b'\x01' + mensagem
 
-        # 9) the encoded (padded) message is the byte 0x00 concatenated with the masked_seed and masked_db
-        encoded_message = b'\x00' + masked_seed + masked_db
-
-        # 10) encrypt message with RSA
-        return self.RSAEncrypt(encoded_message, public_key)
-
-    def OAEPdecrypt(self, encoded_message, private_key, label=""):
-        """
-        Decrypt an encoded message using the OAEP method.
-
-        Args:
-            encoded_message (bytes): The encoded message to be decrypted.
-            private_key (int): The private key to decrypt the message with.
-            label (str, optional): The label associated with the message. Defaults to "".
-
-        Returns:
-            bytes: The decrypted message.
-
-        Raises:
-            ValueError: If the length of the encoded message is incorrect or if the decoded message has an incorrect label hash.
-        """
+    # Essa função cifra uma mensagem utilizando o método OAEP,
+    # juntamente com o algoritmo RSA.
+    def cifrar_com_oaep(self, mensagem, chave_publica, modulo, rotulo=""):
+        rotulo = rotulo.encode()                        # Transforma o rótulo em bytes                             
         
-        label = label.encode()
+        tamanho_limite = self.k - 2 * self.h_len - 2    # Cálcula o tamanho limite
 
-        # 1) decrypt message with RSA
-        encoded_message = self.RSADecrypt(list(encoded_message), private_key)
+        if (len(mensagem) > tamanho_limite):
+            raise ValueError("Mensagem é muito longa para ser codificada usando OAEP.")
 
-        # 2) hash the label using sha256
-        l_hash = self.hash_func(label).digest()
+        l_hash = self.func_hash(rotulo).digest()        # Aplica o hash ao rótulo usando sha256
+
+        # Gerar uma string de preenchimento e realiza
+        # as concatenações com l_hash, o byte único e
+        # a mensagem
+        bloco_de_dados = self.gerar_bloco_de_dados(l_hash, mensagem)
+
+        # Gera uma semente e uma máscara aleatórias
+        # com tamanhos apropriados
+        seed = os.urandom(self.h_len)                                               # Gera semente
+        mascara_bloco = self.mgf1(seed, self.k - self.h_len - 1, self.func_hash)    # Gera máscara com mgf1
+
+        # Aplica a máscara ao bloco de dados, gera
+        # uma máscara de tamanho h_len pra semente e
+        # aplica a mascara na semente também
+        bloco_mascarado = bytes(self.utils.xor(bloco_de_dados, mascara_bloco))      # Aplica máscara no bloco com xor
+        mascara_seed = self.mgf1(bloco_mascarado, self.h_len, self.func_hash)       # Gera máscara da seed
+        seed_mascarada = bytes(self.utils.xor(seed, mascara_seed))                  # Aplica máscara na seed com xor
+
+        # A mensagem codificada (com preenchimento) é sempre o 
+        # byte 0x00 concatenado com a semente mascarada e 
+        # o bloco de dados mascarado
+        mensagem_cifrada = b'\x00' + seed_mascarada + bloco_mascarado
+        mensagem_cifrada = self.aplicar_rsa(mensagem_cifrada, chave_publica, modulo)
+
+        return mensagem_cifrada
+
+    # Essa função decifra uma mensagem codificada utilizando o método OAEP,
+    # juntamente com o algoritmo RSA.
+    def decifrar_com_oaep(self, mensagem_codificada, chave_privada, modulo, rotulo=""):        
+        rotulo = rotulo.encode()
+
+        # Como a mensagem vem cifrada de acordo com RSA, primeiro temos 
+        # que decifrá-la de acordo.
+        mensagem_codificada = self.aplicar_rsa(list(mensagem_codificada), chave_privada, modulo)
+        l_hash = self.func_hash(rotulo).digest()                            # Hasheamento do rótulo usando o algoritmo sha256
+
+        # Temos que pegar as partes distintas da mensagem concatenadas 
+        # anteriormente
+        seed_mascarada = bytes(mensagem_codificada[1 : self.h_len + 1])     # Pega a seed com a mask
+        bloco_mascarado = bytes(mensagem_codificada[self.h_len + 1:])       # Pega o bloco com a mask
+
+        # Gerar a máscara da semente que foi utilizada anteriormente e
+        # então recupera a semente
+        mascara_seed = self.mgf1(bloco_mascarado, self.h_len, self.func_hash)
+        seed = bytes(self.utils.xor(seed_mascarada, mascara_seed))
+
+        # Gera a máscara do bloco de dados que foi usada anteriormente
+        # e então recupera o bloco de dados
+        mascara_bloco = self.mgf1(seed, self.k - self.h_len - 1, self.func_hash)
+        bloco_de_dados = bytes(self.utils.xor(bloco_mascarado, mascara_bloco))
+
+        l_hash_gerado = bloco_de_dados[:self.h_len]                         # Pega o hash contido no bloco resgatado
+
+        # Se os hashs  coincidirem, então a mensagem é válida
+        if l_hash_gerado != l_hash:
+            raise ValueError("A mensagem decodificada possui um hash de rótulo incorreto.")
         
-        if len(encoded_message) != self.k:
-            raise ValueError("Encoded message has incorrect length.")
-
-        # 3) reverse step 9: split the encoded message
-        masked_seed = bytes(encoded_message[1 : self.h_len + 1])
-        masked_db = bytes(encoded_message[self.h_len + 1:])
-
-        # 4) generate the seed_mask which was used to mask the seed
-        seed_mask = self.mgf1(masked_db, self.h_len, self.hash_func)
-
-        # 5) reverse step 8: recover the seed
-        seed = bytes(self.utils.xor(masked_seed, seed_mask))
-
-        # 6) generate the db_mask which was used to mask the data block
-        db_mask = self.mgf1(seed, self.k - self.h_len - 1, self.hash_func)
-
-        # 7) reverse step 6: recover the data block
-        db = bytes(self.utils.xor(masked_db, db_mask))
-
-        # 8) verify if the decoded message is valid
-        l_hash_gen = db[:self.h_len]
-
-        if l_hash_gen != l_hash:
-            raise ValueError("Decoded message has incorrect label hash.")
+        # Acha onde a mensagem começa
+        inicio_mensagem = self.h_len + bloco_de_dados[self.h_len:].find(b'\x01') + 1
+        mensagem = bloco_de_dados[inicio_mensagem:]
         
-        # 9) split the message correctly
-        message_start = self.h_len + db[self.h_len:].find(b'\x01') + 1
-        message = db[message_start:]
-        
-        return message
+        return mensagem
 
-    def mgf1(self, seed, mask_len, hash_func):
-        """
-        Implements the MGF1 function used in the OAEP encoding and decoding.
+    # Essa função implementa a função geradora de máscara OAEP: a MGF1.
+    def mgf1(self, seed, tamanho_mascara, func_hash):        
+        tamanho_limite = 2**32 * self.h_len
 
-        Args:
-            seed (bytes): The seed for the MGF1 function.
-            mask_len (int): The desired length of the mask.
-            hash_func (callable): The hash function to be used in MGF1.
-
-        Returns:
-            bytes: The mask generated by MGF1.
-        """
-        
-        if mask_len > 2**32 * self.h_len: raise ValueError("Mask too long.")
+        if (tamanho_mascara > tamanho_limite):
+            raise ValueError("Máscara muito longa.")
         
         T = bytearray()
-        for counter in range(math.ceil(mask_len / self.h_len)):
-            c = struct.pack(">I", counter)
-            T += hash_func(seed + c).digest()
-        return T[:mask_len]
+
+        for contador in range(math.ceil(tamanho_mascara / self.h_len)):
+            c = struct.pack(">I", contador)
+            T += func_hash(seed + c).digest()
+        
+        return T[:tamanho_mascara]

@@ -8,50 +8,61 @@ from pickle import dumps, loads
 
 
 def rsa(mensagem):
-
+    # A mensagem já vem encodada UTF-8, resolvendo a questão dos caracteres especiais.
     rsa = RSA()
      
-    print("\n>>> Gerando as chaves publica e privada") 
-    pubk, privk = rsa.generate_keys()                               # gerando as chaves publica e privada (p e q primos com no mínimo de 1024 bits)
+    # Parte II - Geração de chaves e cifra RSA ----------------------------------- #
+    # a) Geração de chaves (p e q primos com no mínimo de 1024 bits) testando primalidade com Miller-Rabin
+    print("\n>>>> Gerando as chaves publica e privada...")
+    chave_publica, chave_privada, modulo = rsa.gerar_chaves()                              # Comentário (?)
     
-    #print("$$ Chave publica: ", pubk)
-    #print("$$ Chave privada: ", privk)
+    # Melhor não printar pois são números enormes!
+    print("$$ Chave publica: ", chave_publica)
+    print("$$ Chave privada: ", chave_privada)
     
-    msgCifrada = rsa.OAEPencrypt(mensagem, pubk)                    # cifrando e decifrando RSA usando OAEP
+    # b e c) Cifração/decifração assimétrica RSA usando OAEP
+    msgCifrada = rsa.cifrar_com_oaep(mensagem, chave_publica, modulo)                   # Comentário (?)
     
-    #print("## Mensagem cifrada: ", msgCifrada, "\n")
+    # print("## Mensagem cifrada: ", msgCifrada, "\n")
     
-    msgDecifrada = rsa.OAEPdecrypt(msgCifrada, privk)
+    msgDecifrada = rsa.decifrar_com_oaep(msgCifrada, chave_privada, modulo).decode()     # Comentário (?)
     
-    #print("## Mensagem decifrada: ", msgDecifrada)
+    print("## Mensagem decifrada: ", msgDecifrada)
     
-    hash_sha3 = hashlib.sha3_256(mensagem).digest()                 # calculando os hashes da mensagem em claro usando a função de hash SHA-3 
-    print(">>> Gerando o hash sha3 da menssagem")
-    #print("Hash sha3: ", hash_sha3)
+    # Parte III - Assinatura RSA ------------------------------------------------- #
+    # O digest retorna o hash de fato
+    hash_sha3 = hashlib.sha3_256(mensagem).digest()                     # Comentário (?)
+    print(">>>> Gerando o hash sha3 da menssagem")
 
-    msgAssinatura = rsa.OAEPencrypt(hash_sha3, pubk)                # assinatura da mensagem (cifrando o hash da mensagem) 
-    print(">>> Cifrando o hash com RSA-OAEP")
+    # print("Hash sha3: ", hash_sha3)
+
+    # a) Assinatura da mensagem (cifração do hash da mensagem)
+    msgAssinatura = rsa.cifrar_com_oaep(hash_sha3, chave_publica, modulo)               # Comentário (?)
+    print(">>>> Cifrando o hash com RSA-OAEP")
     
     #print("Mensagem de assinatura: ", msgAssinatura)
 
-    msgCodBase64 = base64.b64encode(dumps(msgAssinatura))           # colocando a mensagem de assinatura em BASE64
-    print(">>> Codificando em base64")
+    # b) Formatação do resultado (caracteres especiais e informações para verificação em BASE64)
+    msgCodBase64 = base64.b64encode(dumps(msgAssinatura))               # Comentário (?)
+    print(">>>> Codificando em base64")
     #print("Mensagem codificada em BASE64: ", msgCodBase64)
 
-    msgDecodBase64 = base64.b64decode(msgCodBase64)                 # parsing do documento assinado e decifração da mensagem (de acordo com a formatação de BASE64) 
-    msgAssinatura = loads(msgDecodBase64)
-    print("---------------\n>>> Decodificando base64")
+    # Parte IV - Verificação ----------------------------------------------------- #
+    # a) Parsing do documento assinado e decifração da mensagem (de acordo com a formatação usada, no caso BASE64)
+    msgDecodBase64 = base64.b64decode(msgCodBase64)                     # Comentário (?)
+    msgAssinatura = loads(msgDecodBase64)                               # Comentário (?)
+    print(">>>> Decodificando base64")
 
-    hashDecod = rsa.OAEPdecrypt(msgAssinatura, privk)               # quebrando a assinatura (decifrando o hash) 
-    print(">>> Decodificando o hash da mensagem com RSA-OEAP")
+    # b) Decifração da assinatura (decifração do hash)
+    hashDecod = rsa.decifrar_com_oaep(msgAssinatura, chave_privada, modulo)              # Quebrando a assinatura (decifrando o hash) 
+    print(">>>> Decodificando o hash da mensagem com RSA-OEAP")
 
-    # Verificação do calculo e comparando o hash do arquivo pra ver se a mensagem eh autentica 
+    # c) Verificação (cálculo e comparação do hash do arquivo) 
     
-    # Mensagem modificada
-    #mensagem = "Outra mensagem".encode()
-    hash_sha3_file = hashlib.sha3_256(mensagem).digest()
+    # Mensagem modificada para falha na verificação
+    # mensagem = "Outra mensagem".encode()
     
-    if hash_sha3_file == hashDecod:
+    if hash_sha3 == hashDecod:
         print("[!] Verificacao realizada com sucesso")
     else:
         print("[X] Falha na verificacao")

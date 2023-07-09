@@ -81,31 +81,49 @@ class MillerRabin:
 
         return prime
 
-    def single_test(self, number: int, witness: int) -> bool:
-        # fazendo teste unitario da primalidade usando Miller-Rabin
-        
-        exp, rem = number - 1, 0
-        while not exp & 1:  # check if exp is even
+    # Realiza um teste único de primalidade Miller-Rabin.
+    def teste_unico(self, numero: int, witness: int) -> bool:
+        exp = numero - 1
+        rem = 0
+
+        while (not exp & 1):
+            # Faz um shift
             exp >>= 1
             rem += 1
-        x = pow(witness, exp, number)
-        if x == 1 or x == number - 1:
+        
+        x = pow(witness, exp, numero)
+        
+        if (x == 1) or (x == numero - 1):
             return True
-        for _ in range(rem - 1):
-            x = pow(x, 2, number)
-            if x == number - 1:
+        
+        for i in range(rem - 1):
+            x = pow(x, 2, numero)
+            
+            if x == (numero - 1):
                 return True
+        
         return False
 
-    def is_prime(self, number: int, k=40) -> bool:
-        # testando a primalidade de um numero a partir do metodo de Miller-Rabin
-        # eu nao sei explicar como que isso aqui funciona
-
+    # Verifica se um número é primo de acordo com o teste de Miller-Rabin.
+    def eh_primo(self, number: int, k=40) -> bool:
+        # Casos triviais
         if number <= 1: return False
         if number <= 3: return True
         if number % 2 == 0 or number % 3 == 0: return False
 
-        for _ in range(k):
+        for i in range(k):
             witness = self.rng.randrange(2, number - 1)
-            if not self.single_test(number, witness): return False
+            
+            if (not self.teste_unico(number, witness)): 
+                return False
+        
         return True
+
+    # Gera um número primo aleatório usando o teste de primalidade Miller-Rabin
+    def gera_primo(self) -> int:
+        while True:
+            # Shift para ficar no range ideal de no mínimo 1024 bits.
+            numero_gerado = (random.SystemRandom().randrange(1 << 1024 - 1, 1 << 1024) << 1) + 1
+            
+            if self.eh_primo(numero_gerado):
+                return numero_gerado
