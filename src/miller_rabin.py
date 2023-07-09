@@ -1,8 +1,8 @@
 import random
 
-NUMBER_OF_TRIES = 20
+TENTATIVAS = 20
 
-FIRST_PRIMES_LIST = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 
+LISTA_PRIMOS = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 
                      31, 37, 41, 43, 47, 53, 59, 61, 67,  
                      71, 73, 79, 83, 89, 97, 101, 103,  
                      107, 109, 113, 127, 131, 137, 139,  
@@ -14,21 +14,24 @@ FIRST_PRIMES_LIST = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
 
 class MillerRabin:
     def __init__(self) -> None:
-        """
-        Initializes the MillerRabin object
-        """
         self.rng = random.SystemRandom()
 
     def low_level_prime(n): 
-        while True: 
+        while True:
             prime_candidate = MillerRabin.random_n_bits_number(n)  
-            for divisor in FIRST_PRIMES_LIST: 
-                    if prime_candidate % divisor == 0 and divisor**2 <= prime_candidate: 
-                            break
+            for divisor in LISTA_PRIMOS: 
+                if prime_candidate % divisor == 0 and divisor**2 <= prime_candidate:
+                    # se o candidato a primo for divisivel por um primo, ou algum primo ao quadrado
+                    # for menor ou igual ao candidato a primo, ele nao eh primo
+
+                    break
             else:
                 return prime_candidate
 
-    def trial_composite(round_tester, even_component, prime_candidate, max_divisions_by_two): 
+    def trial_composite(round_tester, even_component, prime_candidate, max_divisions_by_two):
+        # isso aqui eh um metodo auxiliar pra testar se um numero eh primo por meio do teste de primalidade do Miller-Rabin,
+        # mas eu nao sei explicar nadica de nada disso, entao fica aqui a implementacao
+        
         if pow(round_tester, even_component, prime_candidate) == 1: 
             return False
 
@@ -37,7 +40,9 @@ class MillerRabin:
                 return False
         return True
 
-    def miller_rabin(prime_candidate): 
+    def miller_rabin(prime_candidate):
+        # eu realmente nao sei explicar o metodo de miller-rabin
+
         max_divisions_by_two = 0
         even_component = prime_candidate-1
 
@@ -46,15 +51,17 @@ class MillerRabin:
             max_divisions_by_two += 1
         assert(2 ** max_divisions_by_two * even_component == prime_candidate-1) 
     
-        for _ in range(NUMBER_OF_TRIES): 
+        for _ in range(TENTATIVAS): 
             round_tester = random.randrange(2, prime_candidate) 
             if MillerRabin.trial_composite(round_tester, even_component, prime_candidate, max_divisions_by_two): 
                 return False
         return True
 
     @staticmethod
-    def random_n_bits_number(n): 
-        return random.randrange(2 ** (n-1) + 1, 2 ** n - 1)             # retornando um numero aleatorio de 128 bits em dua representacao decimal
+    def random_n_bits_number(n):
+        # retornando um numero aleatorio de 128 bits em dua representacao decimal
+
+        return random.randrange(2 ** (n-1) + 1, 2 ** n - 1)             
     
     @staticmethod
     def get_prime_n_bits(n):
@@ -63,23 +70,20 @@ class MillerRabin:
             prime_candidate = MillerRabin.low_level_prime(n) 
             
             if not MillerRabin.miller_rabin(prime_candidate): 
-                    continue
-            else: 
-                    prime = prime_candidate
-                    break
+                # se o candidato a primo nao passou no teste de primalidade, ele nao eh primo
+
+                continue
+            else:
+                # se ele passar o teste de primalidade, ele eh o primeiro primo de n bits que da pra pegar
+                
+                prime = prime_candidate
+                break
+
         return prime
 
     def single_test(self, number: int, witness: int) -> bool:
-        """
-        Perform a single test of the Miller-Rabin primality test
+        # fazendo teste unitario da primalidade usando Miller-Rabin
         
-        Args:
-            number (int): The number to be tested for primality.
-            witness (int): A random integer in the range [2, number-1].
-        
-        Returns:
-            bool: True if number is probably prime, False otherwise
-        """
         exp, rem = number - 1, 0
         while not exp & 1:  # check if exp is even
             exp >>= 1
@@ -94,16 +98,9 @@ class MillerRabin:
         return False
 
     def is_prime(self, number: int, k=40) -> bool:
-        """
-        Test a number:param rimality using the Miller-Rabin primality test
+        # testando a primalidade de um numero a partir do metodo de Miller-Rabin
+        # eu nao sei explicar como que isso aqui funciona
 
-        Args:
-            number (int): The number to be tested for primality
-            k (int, optinal): The number of iterations of the single_test function to perform. Default is 40.
-        
-        Returns
-            bool: True if number is probably prime, False otherwise
-        """
         if number <= 1: return False
         if number <= 3: return True
         if number % 2 == 0 or number % 3 == 0: return False

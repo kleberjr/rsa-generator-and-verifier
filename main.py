@@ -12,12 +12,12 @@ def rsa(mensagem):
     rsa = RSA()
      
     print("\n>>> Gerando as chaves publica e privada") 
-    pubk, privk = rsa.generate_keys()                                           # gerando as chaves publica e privada (p e q primos com no mínimo de 1024 bits)
+    pubk, privk = rsa.generate_keys()                               # gerando as chaves publica e privada (p e q primos com no mínimo de 1024 bits)
     
     #print("$$ Chave publica: ", pubk)
     #print("$$ Chave privada: ", privk)
     
-    msgCifrada = rsa.OAEPencrypt(mensagem, pubk)                                 # cifrando e decifrando RSA usando OAEP
+    msgCifrada = rsa.OAEPencrypt(mensagem, pubk)                    # cifrando e decifrando RSA usando OAEP
     
     #print("## Mensagem cifrada: ", msgCifrada, "\n")
     
@@ -25,16 +25,16 @@ def rsa(mensagem):
     
     #print("## Mensagem decifrada: ", msgDecifrada)
     
-    hash_sha3 = hashlib.sha3_256(mensagem).digest()                              # calculando os hashes da mensagem em claro usando a função de hash SHA-3 
+    hash_sha3 = hashlib.sha3_256(mensagem).digest()                 # calculando os hashes da mensagem em claro usando a função de hash SHA-3 
     print(">>> Gerando o hash sha3 da menssagem")
     #print("Hash sha3: ", hash_sha3)
 
-    msgAssinatura = rsa.OAEPencrypt(hash_sha3, pubk)                        # assinatura da mensagem (cifrando o hash da mensagem) 
+    msgAssinatura = rsa.OAEPencrypt(hash_sha3, pubk)                # assinatura da mensagem (cifrando o hash da mensagem) 
     print(">>> Cifrando o hash com RSA-OAEP")
     
     #print("Mensagem de assinatura: ", msgAssinatura)
 
-    msgCodBase64 = base64.b64encode(dumps(msgAssinatura))            # colocando a mensagem de assinatura em BASE64
+    msgCodBase64 = base64.b64encode(dumps(msgAssinatura))           # colocando a mensagem de assinatura em BASE64
     print(">>> Codificando em base64")
     #print("Mensagem codificada em BASE64: ", msgCodBase64)
 
@@ -42,7 +42,7 @@ def rsa(mensagem):
     msgAssinatura = loads(msgDecodBase64)
     print("---------------\n>>> Decodificando base64")
 
-    hashDecod = rsa.OAEPdecrypt(msgAssinatura, privk)            # quebrando a assinatura (decifrando o hash) 
+    hashDecod = rsa.OAEPdecrypt(msgAssinatura, privk)               # quebrando a assinatura (decifrando o hash) 
     print(">>> Decodificando o hash da mensagem com RSA-OEAP")
 
     # Verificação do calculo e comparando o hash do arquivo pra ver se a mensagem eh autentica 
@@ -152,20 +152,24 @@ def main():
 
         escolha = int(input("Qual cifra voce deseja testar?\n1 - RSA\n2 - AES\n3 - Sair\n"))
 
-        if escolha == 1:                                                        # codificacao em RSA
+        if escolha == 1:
+            # codificacao em RSA
+                                
             message = input("Insira uma mensagem para ser cifrada: ").encode()
 
             rsa(message)
             escolha=-1
-        elif escolha == 2:                                                      # codificacao em AES - testar depois
+        elif escolha == 2:
+            # codificacao em AES                                                     
             
             aes()
             escolha=-1
-        elif escolha == 3:                                                      # sair do programa
-            
+        elif escolha == 3:                                                      
+            # sair do programa
 
             exit()
-        else:                                                                   # usuario com entrada invalida
+        else:          
+            # usuario com entrada invalida                                                         
             
             print("Opcao Invalida.\n")
 

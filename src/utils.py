@@ -2,38 +2,28 @@ import hashlib
 import base64
 
 class Utils():
-    """
-    Class for utility functions.
-    """
     def extended_gcd(self, a, b):
-        """
-        Computes the greatest common divisor (gcd) and the coefficients of Bezout's identity using the extended Euclidean algorithm.
+        # algoritmo do gcd (maximo divisor comum) extendido postulado por Euclides em que os numeros usados pra se calcular
+        # o gcd sao reutilizados na criacao de uma equacao diofantina com dois outros numeros que,
+        # quando colocados na mesma equacao, compoem o gcd dos dois numeros
 
-        Args:
-            a (int): An integer.
-            b (int): An integer.
+        # sendo a e b dois numeros inteiros, tem-se dois coeficientes x e y tais que
 
-        Returns:
-            Tuple[int, int, int]: A tuple containing the gcd of a and b, and the coefficients x and y of Bezout's identity.
-        """
+        # a*x + b*y = gcd(a,b)
+
         if b == 0:
+            # se b=0, entao a*x+0*y = a*x, e ainda, gcd(a,0) = a, entao => a*1 = a, e assim x=1 e y=0
             return a, 1, 0
         else:
+            # depois que voltar da iteracao em que gcd = a, x=1 e y=0 (do caso base), a recursiva
+            # vai construindo a resposta voltando na arvore ate chegar nos a e b que foram dados
+
             gcd, x, y = self.extended_gcd(b, a % b)
             return gcd, y, x - (a // b) * y
 
     def xor(self, a, b):
-        """
-        Computs a xor operation between two strings
+        # fazendo a operacao XOR ao longo de duas strings binarias de mesmo tamanho e retornando essa string
 
-        Args:
-            a: A string
-            b: A string
-
-        Returns:
-            A string resulted of a xor operation
-
-        """
         return [a[i] ^ b[i] for i in range(len(a))]
 
     def write_on_file(self, path, content, mode='w'):
@@ -77,7 +67,7 @@ class Utils():
 
     def split_128bits(self, message):
         # quebrando a mensagem em blocos de 128 bits
-        
+
         return [message[i:i+16] for i in range(0, len(message), 16)]
 
 
