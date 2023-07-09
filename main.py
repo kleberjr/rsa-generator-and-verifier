@@ -79,7 +79,7 @@ def aes():
             # valor inicial de uma variavel auxiliar que sera usada na criacao de novas listas/sequencias/keystreams de chaves pra se usar na cifracao
             counter = mr.random_n_bits_number(128)
 
-            # gerando uma chave de 128 bits a partir de um numero primo e calculando um hash pra isso pra ficar o, seguranca total
+            # gerando uma chave de 128 bits a partir de um numero primo e calculando um hash pra isso pra ficar o, daquele jeito, seguranca total
             chave = mr.get_prime_n_bits(1024)
             chave = utils.hash_128_bits(chave)
 
