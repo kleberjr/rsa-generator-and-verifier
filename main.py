@@ -1,60 +1,58 @@
+import hashlib, base64
 from src.rsa import RSA
 from src.aes import AES
 from src.utils import Utils
-from src.miller_rabin import MillerRabin
-import hashlib
-import base64
 from pickle import dumps, loads
-
+from src.miller_rabin import MillerRabin
 
 def rsa(mensagem):
     # A mensagem já vem encodada UTF-8, resolvendo a questão dos caracteres especiais.
     rsa = RSA()
      
     # Parte II - Geração de chaves e cifra RSA ----------------------------------- #
-    # a) Geração de chaves (p e q primos com no mínimo de 1024 bits) testando primalidade com Miller-Rabin
+    # a) Geração de chaves (p e q primos com no mínimo de 1024 bits) testando 
+    # primalidade com Miller-Rabin
     print("\n>>>> Gerando as chaves publica e privada...")
-    chave_publica, chave_privada, modulo = rsa.gerar_chaves()                              # Comentário (?)
+    chave_publica, chave_privada, modulo = rsa.gerar_chaves()
     
-    # Melhor não printar pois são números enormes!
     print("$$ Chave publica: ", chave_publica)
     print("$$ Chave privada: ", chave_privada)
     
     # b e c) Cifração/decifração assimétrica RSA usando OAEP
-    msgCifrada = rsa.cifrar_com_oaep(mensagem, chave_publica, modulo)                   # Comentário (?)
+    msgCifrada = rsa.cifrar_com_oaep(mensagem, chave_publica, modulo)
+    msgDecifrada = rsa.decifrar_com_oaep(msgCifrada, chave_privada, modulo).decode()
     
     # print("## Mensagem cifrada: ", msgCifrada, "\n")
-    
-    msgDecifrada = rsa.decifrar_com_oaep(msgCifrada, chave_privada, modulo).decode()     # Comentário (?)
-    
-    print("## Mensagem decifrada: ", msgDecifrada)
+    # print("## Mensagem decifrada: ", msgDecifrada)
     
     # Parte III - Assinatura RSA ------------------------------------------------- #
     # O digest retorna o hash de fato
-    hash_sha3 = hashlib.sha3_256(mensagem).digest()                     # Comentário (?)
+    hash_sha3 = hashlib.sha3_256(mensagem).digest()
     print(">>>> Gerando o hash sha3 da menssagem")
 
     # print("Hash sha3: ", hash_sha3)
 
     # a) Assinatura da mensagem (cifração do hash da mensagem)
-    msgAssinatura = rsa.cifrar_com_oaep(hash_sha3, chave_publica, modulo)               # Comentário (?)
+    msgAssinatura = rsa.cifrar_com_oaep(hash_sha3, chave_publica, modulo)
     print(">>>> Cifrando o hash com RSA-OAEP")
     
-    #print("Mensagem de assinatura: ", msgAssinatura)
+    # print("Mensagem de assinatura: ", msgAssinatura)
 
-    # b) Formatação do resultado (caracteres especiais e informações para verificação em BASE64)
-    msgCodBase64 = base64.b64encode(dumps(msgAssinatura))               # Comentário (?)
+    # b) Formatação do resultado (caracteres especiais e informações para 
+    # verificação em BASE64)
+    msgCodBase64 = base64.b64encode(dumps(msgAssinatura))
     print(">>>> Codificando em base64")
-    #print("Mensagem codificada em BASE64: ", msgCodBase64)
+    # print("Mensagem codificada em BASE64: ", msgCodBase64)
 
     # Parte IV - Verificação ----------------------------------------------------- #
-    # a) Parsing do documento assinado e decifração da mensagem (de acordo com a formatação usada, no caso BASE64)
-    msgDecodBase64 = base64.b64decode(msgCodBase64)                     # Comentário (?)
-    msgAssinatura = loads(msgDecodBase64)                               # Comentário (?)
+    # a) Parsing do documento assinado e decifração da mensagem (de acordo com a 
+    # formatação usada, no caso BASE64)
+    msgDecodBase64 = base64.b64decode(msgCodBase64)
+    msgAssinatura = loads(msgDecodBase64)
     print(">>>> Decodificando base64")
 
     # b) Decifração da assinatura (decifração do hash)
-    hashDecod = rsa.decifrar_com_oaep(msgAssinatura, chave_privada, modulo)              # Quebrando a assinatura (decifrando o hash) 
+    hashDecod = rsa.decifrar_com_oaep(msgAssinatura, chave_privada, modulo)     # Quebrando a assinatura (decifrando o hash) 
     print(">>>> Decodificando o hash da mensagem com RSA-OEAP")
 
     # c) Verificação (cálculo e comparação do hash do arquivo) 
