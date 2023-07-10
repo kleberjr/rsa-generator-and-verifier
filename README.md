@@ -18,6 +18,10 @@ O programa contém as seguintes funcionalidades:
 - [ ] Decifração da assinatura (decifração do hash)
 - [ ] Verificação (cálculo e comparação do hash do arquivo)
 
+## Membros
+* Kléber Rodrigues da Costa Júnior - 200053680
+* Maria Eduarda Carvalho Santos - 190092556
+
 ## Execução do Programa
 
 Para que o programa seja testado, é necessário executar a seguinte linha de comando no *bash*
