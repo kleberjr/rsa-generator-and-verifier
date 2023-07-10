@@ -2,7 +2,7 @@ import hashlib
 import base64
 
 class Utils():
-    def extended_gcd(self, a, b):
+    def euclideano_extendido(self, a, b):
         # algoritmo do gcd (maximo divisor comum) extendido postulado por Euclides em que os numeros usados pra se calcular
         # o gcd sao reutilizados na criacao de uma equacao diofantina com dois outros numeros que,
         # quando colocados na mesma equacao, compoem o gcd dos dois numeros
@@ -18,7 +18,7 @@ class Utils():
             # depois que voltar da iteracao em que gcd = a, x=1 e y=0 (do caso base), a recursiva
             # vai construindo a resposta voltando na arvore ate chegar nos a e b que foram dados
 
-            gcd, x, y = self.extended_gcd(b, a % b)
+            gcd, x, y = self.euclideano_extendido(b, a % b)
             return gcd, y, x - (a // b) * y
 
     def xor(self, a, b):
